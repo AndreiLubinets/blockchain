@@ -1,5 +1,5 @@
 use axum::response::IntoResponse;
-use log::error;
+use tracing::error;
 use reqwest::StatusCode;
 
 pub enum ApiError {

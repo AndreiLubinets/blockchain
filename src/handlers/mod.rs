@@ -1,6 +1,6 @@
 use core::str;
 
-use crate::{config::DatabaseConnection, domain::block::Block, util::decode_url};
+use crate::{config::database::DatabaseConnection, domain::block::Block, util::decode_url};
 use axum::{
     extract::{Path, Query},
     Json,
@@ -23,12 +23,11 @@ pub async fn blocks(
 ) -> Result<Json<Vec<Block>>, ApiError> {
     let mut builder = QueryBuilder::new("select * from blocks");
 
-    if let Some(hex_hash) = params.start_hash {
-        let start_hash: Vec<u8> =
-            hex::decode(hex_hash).map_err(|err| ApiError::BadRequest(err.to_string()))?;
+    if let Some(hash) = params.start_hash {
         builder
-            .push("where id >= (select id from blocks where hash = ?1)")
-            .push_bind(start_hash);
+            .push(" where id >= (select id from blocks where hash = ")
+            .push_bind(hash)
+            .push(")");
     };
 
     let result = builder
@@ -49,7 +48,7 @@ pub async fn blocks_remote(
     let mut request = Client::new().get(address_decoded);
 
     if let Some(hex_hash) = params.start_hash {
-        request = request.form(&[("start_hash", &hex_hash)]);
+        request = request.query(&[("start_hash", &hex_hash)]);
     };
 
     let response = request.send().await?.json::<Vec<Block>>().await.map(Json)?;

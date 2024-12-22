@@ -1,8 +1,8 @@
 create table blocks(
-  id INTEGER PRIMARY KEY,
-  'from' VARCHAR(255),
-  'to' VARCHAR(255),
-  value VARCHAR(255),
-  hash BLOB
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  'from' TEXT,
+  'to' TEXT,
+  value TEXT,
+  hash TEXT UNIQUE
 );
 

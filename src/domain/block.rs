@@ -1,22 +1,22 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-use crate::util;
+use crate::{services::eth::ERC20::Transfer, util};
 
-#[derive(FromRow, Serialize, Deserialize)]
+#[derive(FromRow, Serialize, Deserialize, Debug)]
 pub struct Block {
-    id: u32,
-    from: String,
-    to: String,
-    value: String,
-    hash: Vec<u8>,
+    pub id: Option<u32>,
+    pub from: String,
+    pub to: String,
+    pub value: String,
+    pub hash: String,
 }
 
 impl Block {
-    pub fn new(id: u32, from: String, to: String, value: String) -> Self {
-        let hash = Block::calculate_hash(id, &from, &to, &value);
+    pub fn new(from: String, to: String, value: String) -> Self {
+        let hash = hex::encode(Block::calculate_hash(&from, &to, &value));
         Self {
-            id,
+            id: None,
             from,
             to,
             value,
@@ -24,10 +24,18 @@ impl Block {
         }
     }
 
-    fn calculate_hash(id: u32, from: &str, to: &str, value: &str) -> Vec<u8> {
-        let input = format!("{}{}{}{}", id, from, to, value);
+    fn calculate_hash(from: &str, to: &str, value: &str) -> Vec<u8> {
+        let input = format!("{}{}{}", from, to, value);
         util::sha256_double(input)
     }
 }
 
-//pub struct Sha256Hash([u8; 32]);
+impl From<Transfer> for Block {
+    fn from(value: Transfer) -> Self {
+        Block::new(
+            value.to.to_string(),
+            value.from.to_string(),
+            value.value.to_string(),
+        )
+    }
+}

@@ -1,7 +1,5 @@
 *.db
-*.txt
 
 /target
-/sqlite
 
 shell.nix
