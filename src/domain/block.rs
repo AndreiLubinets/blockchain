@@ -1,11 +1,11 @@
 use alloy::hex::ToHexExt;
-use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 use crate::{services::eth::ERC20::Transfer, util};
 
-#[derive(FromRow, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(FromRow)]
 pub struct Block {
+    #[allow(dead_code)]
     pub id: Option<u32>,
     pub from: String,
     pub to: String,
