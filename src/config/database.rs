@@ -3,10 +3,10 @@ use axum::{
     extract::{FromRef, FromRequestParts},
     http::{request::Parts, StatusCode},
 };
-use sqlx::pool::PoolConnection;
-use sqlx::Error;
 use sqlx::Sqlite;
 use sqlx::SqlitePool;
+use sqlx::{migrate::MigrateError, pool::PoolConnection};
+use sqlx::{sqlite::SqliteConnectOptions, Error};
 
 pub struct DatabaseConnection(pub PoolConnection<Sqlite>);
 
@@ -31,7 +31,12 @@ where
 }
 
 pub async fn database_pool() -> anyhow::Result<SqlitePool> {
-    SqlitePool::connect("sqlite:blockchain.db")
-        .await
-        .map_err(Error::into)
+    let options = SqliteConnectOptions::new()
+        .filename("blockchain.db")
+        .create_if_missing(true);
+    SqlitePool::connect_with(options).await.map_err(Error::into)
+}
+
+pub async fn run_migration(pool: &SqlitePool) -> Result<(), MigrateError> {
+    sqlx::migrate!().run(pool).await
 }

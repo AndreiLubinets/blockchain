@@ -1,3 +1,4 @@
+use alloy::hex::decode;
 use core::str;
 
 use reqwest::Url;
@@ -14,13 +15,14 @@ pub fn sha256(input: impl AsRef<[u8]>) -> Vec<u8> {
 }
 
 pub fn decode_url(input: &str) -> anyhow::Result<Url> {
-    let bytes = hex::decode(input)?;
+    let bytes = decode(input)?;
     let url = Url::parse(str::from_utf8(&bytes)?)?;
     Ok(url)
 }
 
 #[cfg(test)]
 mod tests {
+    use alloy::hex::encode;
     use reqwest::Url;
 
     use crate::util::sha256_double;
@@ -60,10 +62,19 @@ mod tests {
     #[test]
     fn decode_url_test() {
         let expected = Url::parse("http://localhost:3000").unwrap();
-        let encoded = hex::encode(expected.to_string());
+        let encoded = encode(expected.to_string());
 
         let actual = decode_url(&encoded).unwrap();
 
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn decode_url_test_invalid_url() {
+        let encoded = encode("invalid_url");
+
+        let actual = decode_url(&encoded);
+
+        assert!(actual.is_err());
     }
 }

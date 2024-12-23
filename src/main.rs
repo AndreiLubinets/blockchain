@@ -1,6 +1,9 @@
 use axum::{routing::get, Router};
 use clap::Parser;
-use config::{cli::Args, database::DatabaseConnection};
+use config::{
+    cli::Args,
+    database::{run_migration, DatabaseConnection},
+};
 use handlers::{blocks, blocks_remote};
 use services::block::save_eth_logs_as_blocks;
 use tracing::{error, warn};
@@ -20,6 +23,9 @@ async fn main() {
     let db_pool = config::database::database_pool()
         .await
         .expect("Unable to connect to the database");
+    run_migration(&db_pool)
+        .await
+        .expect("Unable to run migrations");
     let pool = db_pool.clone();
 
     let args = Args::parse();
