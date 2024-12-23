@@ -1,6 +1,9 @@
 use core::str;
 
-use crate::{config::database::DatabaseConnection, domain::block::Block, util::decode_url};
+use crate::{
+    config::database::DatabaseConnection, domain::block::Block, dto::block::BlockDto,
+    util::decode_url,
+};
 use axum::{
     extract::{Path, Query},
     Json,
@@ -20,7 +23,7 @@ pub struct Params {
 pub async fn blocks(
     DatabaseConnection(mut conn): DatabaseConnection,
     Query(params): Query<Params>,
-) -> Result<Json<Vec<Block>>, ApiError> {
+) -> Result<Json<Vec<BlockDto>>, ApiError> {
     let mut builder = QueryBuilder::new("select * from blocks");
 
     if let Some(hash) = params.start_hash {
@@ -33,16 +36,18 @@ pub async fn blocks(
     let result = builder
         .build_query_as::<Block>()
         .fetch_all(&mut *conn)
-        .await
-        .map(Json)?;
+        .await?
+        .into_iter()
+        .map(|block| block.into())
+        .collect::<Vec<BlockDto>>();
 
-    Ok(result)
+    Ok(Json(result))
 }
 
 pub async fn blocks_remote(
     Query(params): Query<Params>,
     Path(address): Path<String>,
-) -> Result<Json<Vec<Block>>, ApiError> {
+) -> Result<Json<Vec<BlockDto>>, ApiError> {
     let address_decoded =
         decode_url(&address).map_err(|err| ApiError::BadRequest(err.to_string()))?;
     let mut request = Client::new().get(address_decoded);
@@ -51,7 +56,12 @@ pub async fn blocks_remote(
         request = request.query(&[("start_hash", &hex_hash)]);
     };
 
-    let response = request.send().await?.json::<Vec<Block>>().await.map(Json)?;
+    let response = request
+        .send()
+        .await?
+        .json::<Vec<BlockDto>>()
+        .await
+        .map(Json)?;
 
     Ok(response)
 }
@@ -63,25 +73,25 @@ mod tests {
     use axum_test::TestServer;
     use reqwest::StatusCode;
 
+    use crate::dto::block::BlockDto;
+
     use super::blocks_remote;
-    use super::Block;
 
-    fn generate_blocks() -> Vec<Block> {
-        let first_block = Block::new(
-            "0x6e9Bdd4A0f5847ea7d490E88d7c764A47a960f76".to_owned(),
-            "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984".to_owned(),
-            "190986838900000000000".to_owned(),
-        );
-        let second_block = Block::new(
-            "0x6e9Bdd4A0f5847ea7d490E88d7c764A47a960f76".to_owned(),
-            "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984".to_owned(),
-            "190986838900000000000".to_owned(),
-        );
-
+    fn generate_blocks() -> Vec<BlockDto> {
+        let first_block = BlockDto {
+            from: "0x6e9Bdd4A0f5847ea7d490E88d7c764A47a960f76".to_owned(),
+            to: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984".to_owned(),
+            value: "190986838900000000000".to_owned(),
+        };
+        let second_block = BlockDto {
+            from: "0x6e9Bdd4A0f5847ea7d490E88d7c764A47a960f76".to_owned(),
+            to: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984".to_owned(),
+            value: "230986838900000000000".to_owned(),
+        };
         vec![first_block, second_block]
     }
 
-    async fn blocks_mock() -> Json<Vec<Block>> {
+    async fn blocks_mock() -> Json<Vec<BlockDto>> {
         Json(generate_blocks())
     }
 

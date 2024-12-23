@@ -7,6 +7,7 @@ use tracing::{error, warn};
 
 mod config;
 mod domain;
+mod dto;
 mod handlers;
 mod services;
 mod util;
