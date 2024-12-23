@@ -1,9 +1,6 @@
 use axum::{routing::get, Router};
 use clap::Parser;
-use config::{
-    cli::Args,
-    database::{run_migration, DatabaseConnection},
-};
+use config::{cli::Args, database::run_migration};
 use handlers::{blocks, blocks_remote};
 use services::block::save_eth_logs_as_blocks;
 use tracing::{error, warn};
@@ -26,15 +23,14 @@ async fn main() {
     run_migration(&db_pool)
         .await
         .expect("Unable to run migrations");
-    let pool = db_pool.clone();
+    let pool_cloned = db_pool.clone();
 
     let args = Args::parse();
     match args.contract_address {
         Some(addr) => {
             tokio::spawn(async move {
                 if let Err(err) =
-                    save_eth_logs_as_blocks(DatabaseConnection(pool.acquire().await.unwrap()), addr)
-                        .await
+                    save_eth_logs_as_blocks(pool_cloned, addr, args.starting_block).await
                 {
                     error!("Unable to save blocks: {}", err);
                 };
