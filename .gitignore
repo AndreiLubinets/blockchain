@@ -1,1 +1,6 @@
+*.db
+*.db-*
+
 /target
+
+shell.nix
