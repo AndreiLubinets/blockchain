@@ -1,6 +1,6 @@
 use axum::response::IntoResponse;
-use tracing::error;
 use reqwest::StatusCode;
+use tracing::error;
 
 pub enum ApiError {
     BadRequest(String),
