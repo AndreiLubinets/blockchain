@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use alloy::primitives::U256;
+use anyhow::anyhow;
 use sqlx::{Decode, Encode, Sqlite, Type};
 
 #[derive(Clone)]
@@ -29,7 +30,9 @@ impl<'r> Decode<'r, Sqlite> for Uint256 {
         value: <Sqlite as sqlx::Database>::ValueRef<'r>,
     ) -> Result<Self, sqlx::error::BoxDynError> {
         let bytes: Vec<u8> = <Vec<u8> as Decode<Sqlite>>::decode(value)?;
-        let be_bytes: [u8; 32] = bytes.try_into().unwrap();
+        let be_bytes: [u8; 32] = bytes
+            .try_into()
+            .map_err(|_| anyhow!("Unable to convert byte vector into fixed byte array"))?;
         Ok(Uint256(U256::from_be_bytes(be_bytes)))
     }
 }
