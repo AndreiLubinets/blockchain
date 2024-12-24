@@ -29,8 +29,8 @@ pub async fn save_blocks(pool: SqlitePool, blocks: Vec<Block>) -> anyhow::Result
 
     builder.push_values(blocks, |mut binds, block| {
         binds
-            .push_bind(block.to)
             .push_bind(block.from)
+            .push_bind(block.to)
             .push_bind(block.value)
             .push_bind(block.hash);
     });
