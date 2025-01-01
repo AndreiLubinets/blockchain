@@ -4,7 +4,7 @@ use alloy::primitives::U256;
 use anyhow::anyhow;
 use sqlx::{Decode, Encode, Sqlite, Type};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Uint256(pub U256);
 
 impl Deref for Uint256 {

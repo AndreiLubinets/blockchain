@@ -7,17 +7,17 @@ use crate::domain::block::Block;
 use super::eth::query_transfer_logs;
 
 pub async fn save_eth_logs_as_blocks(
-    pool: SqlitePool,
+    pool: &SqlitePool,
     contract_address: Address,
     starting_block: Option<u64>,
 ) -> anyhow::Result<()> {
     let blocks = query_transfer_logs(contract_address, starting_block).await?;
-    save_blocks(pool, blocks).await?;
+    save_blocks(pool, &blocks).await?;
 
     Ok(())
 }
 
-pub async fn save_blocks(pool: SqlitePool, blocks: Vec<Block>) -> anyhow::Result<()> {
+pub async fn save_blocks(pool: &SqlitePool, blocks: &[Block]) -> anyhow::Result<()> {
     let len = blocks.len();
     if len == 0 {
         info!("No blocks to insert");

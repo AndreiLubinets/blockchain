@@ -5,7 +5,7 @@ use crate::{services::eth::ERC20::Transfer, util};
 
 use super::sqlx_types::Uint256;
 
-#[derive(FromRow)]
+#[derive(FromRow, Debug)]
 pub struct Block {
     #[allow(dead_code)]
     id: Option<u32>,
@@ -58,6 +58,15 @@ impl From<Transfer> for Block {
             value.to.to_string(),
             value.value.to(),
         )
+    }
+}
+
+impl PartialEq for Block {
+    fn eq(&self, other: &Self) -> bool {
+        self.from == other.from
+            && self.to == other.to
+            && self.value == other.value
+            && self.hash == other.hash
     }
 }
 
