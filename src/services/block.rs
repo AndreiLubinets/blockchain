@@ -6,6 +6,8 @@ use crate::domain::block::Block;
 
 use super::eth::query_transfer_logs;
 
+static BATCH_SIZE: usize = 5000;
+
 pub async fn save_eth_logs_as_blocks(
     pool: &SqlitePool,
     contract_address: Address,
@@ -24,6 +26,13 @@ pub async fn save_blocks(pool: &SqlitePool, blocks: &[Block]) -> anyhow::Result<
         return Ok(());
     }
     info!("Inserting {} blocks", len);
+
+    if len > BATCH_SIZE {
+        for batch in blocks.chunks(BATCH_SIZE) {
+            Box::pin(save_blocks(pool, batch)).await?;
+        }
+        return Ok(());
+    }
 
     let mut builder = QueryBuilder::new("insert into blocks('from', 'to', value, hash)");
 
