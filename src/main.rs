@@ -31,7 +31,7 @@ async fn main() {
         Some(addr) => {
             tokio::spawn(async move {
                 if let Err(err) =
-                    save_eth_logs_as_blocks(pool_cloned, addr, args.starting_block).await
+                    save_eth_logs_as_blocks(&pool_cloned, addr, args.starting_block).await
                 {
                     error!("Unable to save blocks: {}", err);
                 };
